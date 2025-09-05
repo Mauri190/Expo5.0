@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiroo - Simulador de Cambio de Aceite</title>
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --secondary-color: #b71c1c;
+            --accent-color: #f44336;
+            --light-color: #121212;
+            --dark-color: #000000;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #ff5252;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+        
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #simulator-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1000px;
+        }
+        
+        #canvas-container {
+            position: relative;
+        }
+        
+        canvas {
+            background-color: #2a2a2a;
+            border: 1px solid #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 300px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            width: calc(100% - 10px);
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        .scenario-btn {
+            background-color: var(--accent-color);
+        }
+        
+        .scenario-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .mode-btn {
+            background-color: var(--warning-color);
+        }
+        
+        .mode-btn:hover {
+            background-color: #e68a00;
+        }
+        
+        #instructions {
+            background-color: #252525;
+            padding: 15px;
+            border-left: 4px solid var(--warning-color);
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        
+        #steps {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .step {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #252525;
+            border-left: 3px solid var(--primary-color);
+            display: none;
+            color: #cccccc;
+            font-size: 14px;
+        }
+        
+        .active-step {
+            background-color: #333;
+            font-weight: bold;
+            display: block;
+            color: var(--text-color);
+        }
+        
+        .tool-details {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #cccccc;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #333;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        #timer {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .highlight {
+            background-color: var(--warning-color);
+            padding: 2px 5px;
+            border-radius: 3px;
+            animation: pulse 1.5s infinite;
+            color: #000;
+        }
+        
+        @keyframes pulse {
+            0% { background-color: var(--warning-color); }
+            50% { background-color: #ffc107; }
+            100% { background-color: var(--warning-color); }
+        }
+        
+        .tutorial-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .mode-indicator {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .tutorial-mode {
+            background-color: rgba(225, 245, 254, 0.1);
+            color: #81d4fa;
+            border: 2px solid #01579b;
+        }
+        
+        .practice-mode {
+            background-color: rgba(241, 248, 233, 0.1);
+            color: #aed581;
+            border: 2px solid #33691e;
+        }
+        
+        .success-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        h2 {
+            color: var(--text-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        
+        .toolbox {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        
+        .tool {
+            width: 50px;
+            height: 50px;
+            background-color: #333;
+            border: 2px solid #555;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+        
+        .tool:hover {
+            border-color: var(--warning-color);
+        }
+        
+        .tool.selected {
+            border-color: var(--success-color);
+            background-color: #2d2d2d;
+        }
+        
+        .oil-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 10px 0;
+            background-color: #252525;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .oil-level-container, .oil-quality-container {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .oil-level-bar, .oil-quality-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #2c3e50;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .oil-level-fill {
+            height: 100%;
+            width: 70%;
+            background: linear-gradient(to right, #27ae60, #f1c40f);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        .oil-quality-fill {
+            height: 100%;
+            width: 40%;
+            background: linear-gradient(to right, #e74c3c, #f39c12);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        @media (max-width: 768px) {
+            #simulator-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .controls {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulador de Cambio de Aceite - Kiroo</h1>
+
+        <div style="margin-bottom: 20px;">
+    <button onclick="window.location.href='gamificación.html'" 
+            style="padding: 10px 20px; background-color: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        ← Volver a Gamificación
+    </button>
+</div>
+    
+    <div id="simulator-container">
+        <div id="canvas-container">
+            <canvas id="oilCanvas" width="400" height="300"></canvas>
+            <div id="success-message" class="success-message">¡Aceite Cambiado Correctamente!</div>
+            <div id="instructions">
+                <div id="mode-indicator" class="mode-indicator tutorial-mode">Modo: Demostración Automática</div>
+                <h3>Instrucciones:</h3>
+                <p id="current-instruction">Selecciona un escenario para comenzar la demostración.</p>
+                <div class="oil-indicator">
+                    <div class="oil-level-container">
+                        <div>Nivel</div>
+                        <div class="oil-level-bar">
+                            <div id="oil-level-fill" class="oil-level-fill"></div>
+                        </div>
+                    </div>
+                    <div class="oil-quality-container">
+                        <div>Calidad</div>
+                        <div class="oil-quality-bar">
+                            <div id="oil-quality-fill" class="oil-quality-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tool-details">
+                    <div>Herramienta: <span id="tool-display">Ninguna</span></div>
+                    <div>Paso: <span id="step-display">0/8</span></div>
+                    <div>Tiempo: <span id="timer">00:00</span></div>
+                    <div class="progress-container">
+                        <div id="progress-bar" class="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h2>Escenarios</h2>
+            <button id="basicOilChange" class="scenario-btn">Cambio básico</button>
+            <button id="syntheticOil" class="scenario-btn">Aceite sintético</button>
+            <button id="oilFilter" class="scenario-btn">Filtro obstruido</button>
+            
+            <h2 id="scenario-title">Selecciona un escenario</h2>
+            <div id="steps">
+                <!-- Los pasos se insertarán aquí dinámicamente -->
+            </div>
+            
+            <h2>Herramientas</h2>
+            <div class="toolbox">
+                <div class="tool" id="tool-wrench" title="Llave para tornillo">🔧</div>
+                <div class="tool" id="tool-filterwrench" title="Llave para filtro">🗜️</div>
+                <div class="tool" id="tool-container" title="Recipiente">🪣</div>
+                <div class="tool" id="tool-oil" title="Aceite nuevo">🛢️</div>
+                <div class="tool" id="tool-funnel" title="Embudo">🥤</div>
+                <div class="tool" id="tool-gloves" title="Guantes">🧤</div>
+            </div>
+            
+            <div class="tutorial-controls">
+                <button id="prev-step" disabled>Anterior</button>
+                <button id="next-step" disabled>Siguiente</button>
+            </div>
+            
+            <button id="play-pause">Iniciar demostración</button>
+            <button id="toggle-mode" class="mode-btn">Cambiar a modo práctica</button>
+            <button id="reset-scenario">Reiniciar escenario</button>
+        </div>
+    </div>
+
+<script>
+    // Configuración del canvas
+    const canvas = document.getElementById('oilCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Ajustar tamaño del canvas si es necesario
+    canvas.width = 400;
+    canvas.height = 300;
+    
+    // Elementos de la interfaz
+    const scenarioTitle = document.getElementById('scenario-title');
+    const stepsContainer = document.getElementById('steps');
+    const prevStepBtn = document.getElementById('prev-step');
+    const nextStepBtn = document.getElementById('next-step');
+    const playPauseBtn = document.getElementById('play-pause');
+    const toggleModeBtn = document.getElementById('toggle-mode');
+    const resetBtn = document.getElementById('reset-scenario');
+    const toolDisplay = document.getElementById('tool-display');
+    const stepDisplay = document.getElementById('step-display');
+    const timerDisplay = document.getElementById('timer');
+    const progressBar = document.getElementById('progress-bar');
+    const currentInstruction = document.getElementById('current-instruction');
+    const modeIndicator = document.getElementById('mode-indicator');
+    const successMessage = document.getElementById('success-message');
+    const oilLevelFill = document.getElementById('oil-level-fill');
+    const oilQualityFill = document.getElementById('oil-quality-fill');
+    
+    // Estados del simulador
+    const OilScenario = {
+        BASIC_OIL_CHANGE: 1,
+        SYNTHETIC_OIL: 2,
+        OIL_FILTER: 3
+    };
+    
+    // Modos de operación
+    const OperationMode = {
+        TUTORIAL: 1,
+        PRACTICE: 2
+    };
+    
+    // Herramientas disponibles
+    const Tools = {
+        WRENCH: 1,
+        FILTER_WRENCH: 2,
+        CONTAINER: 3,
+        OIL: 4,
+        FUNNEL: 5,
+        GLOVES: 6,
+        NONE: 0
+    };
+    
+    // Variables del juego
+    let car = {
+        x: canvas.width / 2,
+        y: canvas.height / 2 + 30,
+        oilLevel: 70,
+        oilQuality: 40,
+        drainPlugRemoved: false,
+        filterRemoved: false,
+        newOilAdded: false,
+        newFilterInstalled: false,
+        drainPlugInstalled: false
+    };
+    
+    let initialCarState = {...car};
+    let currentScenario = null;
+    let currentStep = 0;
+    let steps = [];
+    let tutorialMode = true;
+    let tutorialPlaying = false;
+    let timeElapsed = 0;
+    let timerInterval;
+    let selectedTool = Tools.NONE;
+    let isCompleted = false;
+    let oilDraining = false;
+    let oilDrainingProgress = 0;
+    
+    // Elementos interactivos
+    let interactiveElements = [];
+    
+    // Event listeners para herramientas
+    document.getElementById('tool-wrench').addEventListener('click', () => selectTool(Tools.WRENCH));
+    document.getElementById('tool-filterwrench').addEventListener('click', () => selectTool(Tools.FILTER_WRENCH));
+    document.getElementById('tool-container').addEventListener('click', () => selectTool(Tools.CONTAINER));
+    document.getElementById('tool-oil').addEventListener('click', () => selectTool(Tools.OIL));
+    document.getElementById('tool-funnel').addEventListener('click', () => selectTool(Tools.FUNNEL));
+    document.getElementById('tool-gloves').addEventListener('click', () => selectTool(Tools.GLOVES));
+    
+    // Botones de escenarios
+    document.getElementById('basicOilChange').addEventListener('click', () => createScenario(OilScenario.BASIC_OIL_CHANGE));
+    document.getElementById('syntheticOil').addEventListener('click', () => createScenario(OilScenario.SYNTHETIC_OIL));
+    document.getElementById('oilFilter').addEventListener('click', () => createScenario(OilScenario.OIL_FILTER));
+    
+    // Botones de control
+    prevStepBtn.addEventListener('click', prevStep);
+    nextStepBtn.addEventListener('click', nextStep);
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    toggleModeBtn.addEventListener('click', toggleMode);
+    resetBtn.addEventListener('click', resetScenario);
+    
+    // Event listener para clics en el canvas
+    canvas.addEventListener('click', handleCanvasClick);
+    
+    function selectTool(tool) {
+        selectedTool = tool;
+        
+        // Actualizar UI
+        document.querySelectorAll('.tool').forEach(t => t.classList.remove('selected'));
+        
+        let toolName = "Ninguna";
+        switch(tool) {
+            case Tools.WRENCH: 
+                document.getElementById('tool-wrench').classList.add('selected');
+                toolName = "Llave para tornillo";
+                break;
+            case Tools.FILTER_WRENCH: 
+                document.getElementById('tool-filterwrench').classList.add('selected');
+                toolName = "Llave para filtro";
+                break;
+            case Tools.CONTAINER: 
+                document.getElementById('tool-container').classList.add('selected');
+                toolName = "Recipiente";
+                break;
+            case Tools.OIL: 
+                document.getElementById('tool-oil').classList.add('selected');
+                toolName = "Aceite nuevo";
+                break;
+            case Tools.FUNNEL: 
+                document.getElementById('tool-funnel').classList.add('selected');
+                toolName = "Embudo";
+                break;
+            case Tools.GLOVES: 
+                document.getElementById('tool-gloves').classList.add('selected');
+                toolName = "Guantes";
+                break;
+        }
+        
+        toolDisplay.textContent = toolName;
+    }
+    
+    function handleCanvasClick(e) {
+        if (tutorialMode) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Verificar clic en elementos interactivos
+        for (const element of interactiveElements) {
+            if (isPointInCircle(x, y, element.x, element.y, element.radius)) {
+                handleElementInteraction(element);
+                return;
+            }
+        }
+    }
+    
+    function isPointInCircle(px, py, cx, cy, radius) {
+        const distance = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+        return distance <= radius;
+    }
+    
+    function handleElementInteraction(element) {
+        switch(element.type) {
+            case 'drain_plug':
+                if (selectedTool === Tools.WRENCH && !car.drainPlugRemoved) {
+                    car.drainPlugRemoved = true;
+                    oilDraining = true;
+                    currentInstruction.innerHTML = "Tornillo de drenaje quitado. El aceite comenzará a drenarse.";
+                    currentStep = Math.min(currentStep + 1, steps.length - 1);
+                    updateStepDisplay();
+                } else if (selectedTool === Tools.WRENCH && car.drainPlugRemoved && !car.drainPlugInstalled && oilDrainingProgress >= 100) {
+                    car.drainPlugInstalled = true;
+                    currentInstruction.innerHTML = "Tornillo de drenaje instalado correctamente.";
+                    currentStep = Math.min(currentStep + 1, steps.length - 1);
+                    updateStepDisplay();
+                }
+                break;
+                
+            case 'oil_filter':
+                if (selectedTool === Tools.FILTER_WRENCH && !car.filterRemoved) {
+                    car.filterRemoved = true;
+                    currentInstruction.innerHTML = "Filtro de aceite quitado.";
+                    currentStep = Math.min(currentStep + 1, steps.length - 1);
+                    updateStepDisplay();
+                } else if (selectedTool === Tools.FILTER_WRENCH && car.filterRemoved && !car.newFilterInstalled) {
+                    car.newFilterInstalled = true;
+                    currentInstruction.innerHTML = "Nuevo filtro de aceite instalado.";
+                    currentStep = Math.min(currentStep + 1, steps.length - 1);
+                    updateStepDisplay();
+                }
+                break;
+                
+            case 'oil_cap':
+                if (selectedTool === Tools.OIL && car.drainPlugInstalled && car.newFilterInstalled && !car.newOilAdded) {
+                    car.newOilAdded = true;
+                    car.oilLevel = 100;
+                    car.oilQuality = 100;
+                    updateOilIndicators();
+                    currentInstruction.innerHTML = "Aceite nuevo añadido. No olvides poner la tapa.";
+                    currentStep = Math.min(currentStep + 1, steps.length - 1);
+                    updateStepDisplay();
+                }
+                break;
+        }
+    }
+    
+    // Función para crear escenarios
+    function createScenario(scenarioType) {
+        resetScenario();
+        currentScenario = scenarioType;
+        interactiveElements = [];
+        tutorialPlaying = false;
+        playPauseBtn.textContent = "Iniciar demostración";
+        isCompleted = false;
+        successMessage.style.display = 'none';
+        
+        // Configurar estado inicial del vehículo
+        initialCarState = {
+            x: canvas.width / 2,
+            y: canvas.height / 2 + 30,
+            oilLevel: 70,
+            oilQuality: 40,
+            drainPlugRemoved: false,
+            filterRemoved: false,
+            newOilAdded: false,
+            newFilterInstalled: false,
+            drainPlugInstalled: false
+        };
+        
+        // Configurar según el escenario
+        switch(scenarioType) {
+            case OilScenario.BASIC_OIL_CHANGE:
+                scenarioTitle.textContent = "Cambio Básico de Aceite";
+                initialCarState.oilLevel = 70;
+                initialCarState.oilQuality = 30;
+                
+                steps = [
+                    "1. Estaciona en terreno plano y aplica el freno de mano",
+                    "2. Deja que el motor se enfríe durante 10-15 minutos",
+                    "3. Coloca el recipiente debajo del tornillo de drenaje",
+                    "4. Quita el tornillo de drenaje con la llave adecuada",
+                    "5. Deja que el aceite se drene completamente",
+                    "6. Quita y reemplaza el filtro de aceite",
+                    "7. Vuelve a instalar el tornillo de drenaje",
+                    "8. Añade aceite nuevo por la boca de llenado"
+                ];
+                break;
+                
+            case OilScenario.SYNTHETIC_OIL:
+                scenarioTitle.textContent = "Cambio a Aceite Sintético";
+                initialCarState.oilLevel = 60;
+                initialCarState.oilQuality = 40;
+                
+                steps = [
+                    "1. Prepara el aceite sintético y filtro compatible",
+                    "2. Coloca el recipiente debajo del tornillo de drenaje",
+                    "3. Drena completamente el aceite convencional",
+                    "4. Reemplaza el filtro por uno de calidad premium",
+                    "5. Instala el tornillo de drenaje con el par adecuado",
+                    "6. Añade el aceite sintético gradualmente",
+                    "7. Verifica que no haya fugas en el filtro y tornillo",
+                    "8. Revisa el nivel y completa si es necesario"
+                ];
+                break;
+                
+            case OilScenario.OIL_FILTER:
+                scenarioTitle.textContent = "Filtro de Aceite Obstruido";
+                initialCarState.oilLevel = 80;
+                initialCarState.oilQuality = 10;
+                
+                steps = [
+                    "1. Prepara herramientas para filtro difícil de remover",
+                    "2. Coloca el recipiente debajo del tornillo de drenaje",
+                    "3. Drena el aceite viejo completamente",
+                    "4. Utiliza la llave de filtro adecuada para quitarlo",
+                    "5. Limpia la superficie de contacto del nuevo filtro",
+                    "6. Aplica aceite nuevo en la junta del filtro",
+                    "7. Instala el nuevo filtro apretándolo correctamente",
+                    "8. Añade el aceite nuevo y verifica el nivel"
+                ];
+                break;
+        }
+        
+        car = {...initialCarState};
+        updateOilIndicators();
+        
+        // Mostrar pasos
+        renderSteps();
+        currentStep = 0;
+        updateStepDisplay();
+        
+        // Iniciar temporizador
+        startTimer();
+        
+        // Habilitar controles
+        prevStepBtn.disabled = true;
+        nextStepBtn.disabled = steps.length <= 1;
+        playPauseBtn.disabled = false;
+        
+        // Actualizar instrucción actual
+        currentInstruction.innerHTML = "Selecciona <span class='highlight'>Iniciar demostración</span> para ver el tutorial paso a paso.";
+    }
+    
+    function updateOilIndicators() {
+        oilLevelFill.style.width = `${car.oilLevel}%`;
+        
+        // Cambiar color según calidad
+        if (car.oilQuality > 70) {
+            oilQualityFill.style.background = "linear-gradient(to right, #27ae60, #2ecc71)";
+        } else if (car.oilQuality > 30) {
+            oilQualityFill.style.background = "linear-gradient(to right, #f39c12, #f1c40f)";
+        } else {
+            oilQualityFill.style.background = "linear-gradient(to right, #e74c3c, #c0392b)";
+        }
+        
+        oilQualityFill.style.width = `${car.oilQuality}%`;
+    }
+    
+    function renderSteps() {
+        stepsContainer.innerHTML = '';
+        steps.forEach((step, index) => {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'step';
+            stepEl.textContent = step;
+            stepEl.id = `step-${index}`;
+            stepsContainer.appendChild(stepEl);
+        });
+    }
+    
+    function updateStepDisplay() {
+        document.querySelectorAll('.step').forEach((step, index) => {
+            if (index === currentStep) {
+                step.classList.add('active-step');
+            } else {
+                step.classList.remove('active-step');
+            }
+        });
+        
+        stepDisplay.textContent = `${currentStep + 1}/${steps.length}`;
+        prevStepBtn.disabled = currentStep === 0;
+        nextStepBtn.disabled = currentStep === steps.length - 1;
+        
+        // Actualizar barra de progreso
+        const progress = ((currentStep + 1) / steps.length) * 100;
+        progressBar.style.width = `${progress}%`;
+    }
+    
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            updateStepDisplay();
+        }
+    }
+    
+    function nextStep() {
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            updateStepDisplay();
+        }
+    }
+    
+    function togglePlayPause() {
+        tutorialPlaying = !tutorialPlaying;
+        playPauseBtn.textContent = tutorialPlaying ? "Pausar demostración" : "Iniciar demostración";
+    }
+    
+    function toggleMode() {
+        tutorialMode = !tutorialMode;
+        
+        if (tutorialMode) {
+            toggleModeBtn.textContent = "Cambiar a modo práctica";
+            modeIndicator.textContent = "Modo: Demostración Automática";
+            modeIndicator.className = "mode-indicator tutorial-mode";
+            currentInstruction.innerHTML = "Visualizando demostración automática.";
+            
+            tutorialPlaying = false;
+            playPauseBtn.textContent = "Iniciar demostración";
+        } else {
+            toggleModeBtn.textContent = "Cambiar a modo demostración";
+            modeIndicator.textContent = "Modo: Práctica Libre";
+            modeIndicator.className = "mode-indicator practice-mode";
+            currentInstruction.innerHTML = "Modo práctica. Selecciona herramientas y haz clic en los elementos del motor.";
+            
+            tutorialPlaying = false;
+            playPauseBtn.textContent = "Iniciar demostración";
+        }
+    }
+    
+    function resetScenario() {
+        if (currentScenario) {
+            car = {...initialCarState};
+            oilDraining = false;
+            oilDrainingProgress = 0;
+            updateOilIndicators();
+            
+            tutorialPlaying = false;
+            isCompleted = false;
+            
+            playPauseBtn.textContent = "Iniciar demostración";
+            successMessage.style.display = 'none';
+            currentStep = 0;
+            updateStepDisplay();
+            
+            clearInterval(timerInterval);
+            timeElapsed = 0;
+            updateTimerDisplay();
+            startTimer();
+            
+            currentInstruction.innerHTML = "Escenario reiniciado. Selecciona <span class='highlight'>Iniciar demostración</span> para ver el tutorial paso a paso.";
+        }
+    }
+    
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeElapsed = 0;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            timeElapsed++;
+            updateTimerDisplay();
+        }, 1000);
+    }
+    
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeElapsed / 60);
+        const seconds = timeElapsed % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Función para actualizar el estado del simulador
+    function updateSimulation() {
+        // Simular drenaje de aceite
+        if (oilDraining && oilDrainingProgress < 100) {
+            oilDrainingProgress += 0.5;
+            car.oilLevel = Math.max(0, 70 - (70 * (oilDrainingProgress / 100)));
+            car.oilQuality = Math.max(0, 40 - (40 * (oilDrainingProgress / 100)));
+            updateOilIndicators();
+            
+            if (oilDrainingProgress >= 100) {
+                currentInstruction.innerHTML = "Aceite drenado completamente. Ahora puedes instalar el tornillo de drenaje.";
+            }
+        }
+        
+        // Verificar si la tarea está completada
+        if (!isCompleted && currentScenario && car.newOilAdded && car.drainPlugInstalled && car.newFilterInstalled) {
+            isCompleted = true;
+            successMessage.style.display = 'block';
+            tutorialPlaying = false;
+            playPauseBtn.textContent = "Iniciar demostración";
+            
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Actualizar elementos interactivos
+        updateInteractiveElements();
+    }
+    
+    function updateInteractiveElements() {
+        interactiveElements = [];
+        
+        // Posiciones de los elementos interactivos
+        const engineCenterX = car.x;
+        const engineCenterY = car.y - 20;
+        
+        // Tornillo de drenaje (parte inferior del motor)
+        interactiveElements.push({
+            type: 'drain_plug',
+            x: engineCenterX,
+            y: engineCenterY + 40,
+            radius: 8,
+            label: 'Tornillo'
+        });
+        
+        // Filtro de aceite (lado del motor)
+        interactiveElements.push({
+            type: 'oil_filter',
+            x: engineCenterX + 30,
+            y: engineCenterY + 20,
+            radius: 10,
+            label: 'Filtro'
+        });
+        
+        // Tapa de aceite (parte superior del motor)
+        interactiveElements.push({
+            type: 'oil_cap',
+            x: engineCenterX,
+            y: engineCenterY - 20,
+            radius: 8,
+            label: 'Tapa'
+        });
+    }
+    
+    // Función para dibujar en el canvas
+    function draw() {
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar fondo (suelo de taller)
+        ctx.fillStyle = '#444';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar patrones de suelo
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+        
+        // Dibujar vehículo (simplificado)
+        drawCar();
+        
+        // Dibujar elementos interactivos
+        drawInteractiveElements();
+        
+        // Dibujar aceite si está drenando
+        if (oilDraining && oilDrainingProgress < 100) {
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.7)';
+            const height = 20 * (oilDrainingProgress / 100);
+            ctx.fillRect(car.x - 30, car.y + 40, 60, height);
+        }
+    }
+    
+    function drawCar() {
+        // Dibujar chasis del coche (simplificado)
+        ctx.fillStyle = '#3366cc';
+        ctx.fillRect(car.x - 60, car.y - 50, 120, 30);
+        
+        // Dibujar motor
+        ctx.fillStyle = '#444';
+        ctx.fillRect(car.x - 40, car.y - 40, 80, 40);
+        
+        // Dibujar detalles del motor
+        ctx.fillStyle = '#666';
+        ctx.fillRect(car.x - 30, car.y - 35, 60, 30);
+        
+        // Dibujar tornillo de drenaje
+        ctx.fillStyle = car.drainPlugRemoved ? '#27ae60' : '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(car.x, car.y + 20, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Dibujar filtro de aceite
+        ctx.fillStyle = car.filterRemoved ? '#27ae60' : '#f39c12';
+        ctx.beginPath();
+        ctx.arc(car.x + 30, car.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Dibujar tapa de aceite
+        ctx.fillStyle = car.newOilAdded ? '#27ae60' : '#2ecc71';
+        ctx.beginPath();
+        ctx.arc(car.x, car.y - 30, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Etiquetas
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tornillo', car.x, car.y + 35);
+        ctx.fillText('Filtro', car.x + 30, car.y + 15);
+        ctx.fillText('Tapa', car.x, car.y - 35);
+    }
+    
+    function drawInteractiveElements() {
+        for (const element of interactiveElements) {
+            ctx.beginPath();
+            ctx.arc(element.x, element.y, element.radius, 0, Math.PI * 2);
+            
+            switch(element.type) {
+                case 'drain_plug':
+                    ctx.fillStyle = car.drainPlugRemoved ? 'rgba(39, 174, 96, 0.7)' : 'rgba(231, 76, 60, 0.7)';
+                    break;
+                case 'oil_filter':
+                    ctx.fillStyle = car.filterRemoved ? 'rgba(39, 174, 96, 0.7)' : 'rgba(243, 156, 18, 0.7)';
+                    break;
+                case 'oil_cap':
+                    ctx.fillStyle = car.newOilAdded ? 'rgba(39, 174, 96, 0.7)' : 'rgba(46, 204, 113, 0.7)';
+                    break;
+            }
+            
+            ctx.fill();
+            
+            // Borde para indicar interactividad
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+    
+    // Bucle de animación
+    function animate() {
+        updateSimulation();
+        draw();
+        requestAnimationFrame(animate);
+    }
+    
+    // Iniciar la animación
+    animate();
+</script>
+</body>
+</html>

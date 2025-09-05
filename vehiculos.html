@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiroo - Mis Vehículos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --secondary-color: #b71c1c;
+            --accent-color: #f44336;
+            --light-color: #121212;
+            --dark-color: #000000;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #ff5252;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--text-color) !important;
+        }
+
+        .navbar-brand i {
+            margin-right: 8px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-color) !important;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .content-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            margin-bottom: 0;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        
+        .section-header h2 i {
+            margin-right: 10px;
+        }
+
+        .btn-back {
+            margin-right: 15px;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-back:hover {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+        }
+
+        /* Lista de vehículos */
+        .vehicle-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.03);
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .vehicle-item:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .vehicle-item.active {
+            background-color: rgba(211, 47, 47, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .vehicle-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 18px;
+        }
+
+        .vehicle-info {
+            flex: 1;
+        }
+
+        .vehicle-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .vehicle-item:hover .vehicle-actions {
+            opacity: 1;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-color);
+        }
+        
+        .card-header {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-color);
+        }
+
+        /* Formularios */
+        .form-control, .form-select {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: var(--text-color);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #2a2a2a;
+            border-color: var(--primary-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.25rem rgba(211, 47, 47, 0.25);
+        }
+        
+        .form-label {
+            color: var(--text-color);
+        }
+
+        /* Botones */
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--text-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-outline-danger {
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-outline-danger:hover {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: var(--text-color);
+        }
+
+        footer {
+            background-color: var(--dark-color);
+            border-top: 1px solid #333;
+        }
+
+        footer h5 {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        footer a {
+            text-decoration: none;
+            transition: color 0.2s;
+            color: #cccccc !important;
+        }
+
+        footer a:hover {
+            color: var(--accent-color) !important;
+        }
+        
+        footer p {
+            color: #cccccc;
+        }
+        
+        /* Textos generales */
+        .text-muted {
+            color: #888 !important;
+        }
+        
+        .list-group-item {
+            background-color: transparent;
+            border-color: rgba(255,255,255,0.1);
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-car-front-fill"></i> Kiroo
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="inicio.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="agenda.html">Agenda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="gamificación.html">Gamificación</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="vehiculos.html">Mis Vehículos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="emergencias.html">Emergencias</a></li>
+                </ul>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-sliders"></i> Ajustes</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="container mt-4">
+        <!-- Sección de Formulario de Vehículo -->
+        <section id="formulario" class="content-section">
+            <div class="section-header">
+                <button class="btn btn-back btn-outline-primary" onclick="window.location.href='index.html'">
+                    <i class="bi bi-arrow-left"></i> Volver al Inicio
+                </button>
+                <h2><i class="bi bi-car-front"></i> Mis Vehículos</h2>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Agregar nuevo vehículo</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="vehicleForm">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="vehicleBrand" class="form-label">Marca</label>
+                                        <select class="form-select" id="vehicleBrand" required>
+                                            <option value="" selected disabled>Seleccionar...</option>
+                                            <option value="Toyota">Toyota</option>
+                                            <option value="Nissan">Nissan</option>
+                                            <option value="Honda">Honda</option>
+                                            <option value="Hyundai">Hyundai</option>
+                                            <option value="Ford">Ford</option>
+                                            <option value="Chevrolet">Chevrolet</option>
+                                            <option value="Kia">Kia</option>
+                                            <option value="Mazda">Mazda</option>
+                                            <option value="Volkswagen">Volkswagen</option>
+                                            <option value="otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="vehicleModel" class="form-label">Modelo</label>
+                                        <input type="text" class="form-control" id="vehicleModel" required>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="plateNumber" class="form-label">Número de placa</label>
+                                        <input type="text" class="form-control" id="plateNumber" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="vehicleYear" class="form-label">Año</label>
+                                        <input type="number" class="form-control" id="vehicleYear" min="1900" max="2025" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="currentMileage" class="form-label">Kilometraje actual</label>
+                                    <input type="number" class="form-control" id="currentMileage" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="vehicleColor" class="form-label">Color</label>
+                                    <input type="text" class="form-control" id="vehicleColor">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="vehicleCondition" class="form-label">Estado general</label>
+                                    <select class="form-select" id="vehicleCondition" required>
+                                        <option value="" selected disabled>Seleccionar...</option>
+                                        <option value="excelente">Excelente</option>
+                                        <option value="bueno">Bueno</option>
+                                        <option value="regular">Regular</option>
+                                        <option value="malo">Malo</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="additionalNotes" class="form-label">Notas adicionales</label>
+                                    <textarea class="form-control" id="additionalNotes" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Guardar vehículo
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Mis vehículos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="vehiclesList" class="list-group">
+                                <!-- Los vehículos se cargarán aquí dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-car-front-fill"></i> Kiroo</h5>
+                    <p>La mejor aplicación para la gestión y mantenimiento de tu vehículo.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="agenda.html" class="text-white">Agenda</a></li>
+                        <li><a href="vehiculos.html" class="text-white">Mis Vehículos</a></li>
+                        <li><a href="emergencias.html" class="text-white">Emergencias</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contacto</h5>
+                    <p><i class="bi bi-envelope"></i> contacto@Kiroo.com</p>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <p>&copy; 2025 Kiroo. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables globales
+            let vehicles = [];
+            let editingVehicleId = null;
+            
+            // Cargar vehículos guardados
+            loadVehicles();
+            
+            // Manejo del formulario
+            document.getElementById('vehicleForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveVehicle();
+            });
+            
+            // Funciones para manejar vehículos
+            function loadVehicles() {
+                const savedVehicles = localStorage.getItem('vehicles');
+                if (savedVehicles) {
+                    vehicles = JSON.parse(savedVehicles);
+                }
+                
+                const vehiclesContainer = document.getElementById('vehiclesList');
+                vehiclesContainer.innerHTML = '';
+                
+                if (vehicles.length === 0) {
+                    vehiclesContainer.innerHTML = '<div class="text-center text-muted p-3">No tienes vehículos registrados</div>';
+                    return;
+                }
+                
+                vehicles.forEach(vehicle => {
+                    const vehicleItem = document.createElement('div');
+                    vehicleItem.className = 'list-group-item vehicle-item';
+                    vehicleItem.dataset.id = vehicle.id;
+                    vehicleItem.innerHTML = `
+                        <div class="vehicle-icon">
+                            <i class="bi bi-car-front"></i>
+                        </div>
+                        <div class="vehicle-info">
+                            <h6 class="mb-1">${vehicle.brand} ${vehicle.model}</h6>
+                            <small class="text-muted">Placa: ${vehicle.plateNumber} | Año: ${vehicle.year}</small>
+                        </div>
+                        <div class="vehicle-actions">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editVehicle('${vehicle.id}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${vehicle.id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    vehiclesContainer.appendChild(vehicleItem);
+                });
+            }
+
+            function saveVehicle() {
+                const brand = document.getElementById('vehicleBrand').value;
+                const model = document.getElementById('vehicleModel').value;
+                const plateNumber = document.getElementById('plateNumber').value;
+                const year = document.getElementById('vehicleYear').value;
+                const mileage = document.getElementById('currentMileage').value;
+                const color = document.getElementById('vehicleColor').value;
+                const condition = document.getElementById('vehicleCondition').value;
+                const notes = document.getElementById('additionalNotes').value;
+                
+                if (!brand || !model || !plateNumber || !year || !mileage || !condition) {
+                    alert('Por favor completa todos los campos obligatorios');
+                    return;
+                }
+                
+                const vehicle = {
+                    id: editingVehicleId || Date.now().toString(),
+                    brand,
+                    model,
+                    plateNumber,
+                    year,
+                    mileage,
+                    color,
+                    condition,
+                    notes,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                if (editingVehicleId) {
+                    // Actualizar vehículo existente
+                    const index = vehicles.findIndex(v => v.id === editingVehicleId);
+                    if (index !== -1) {
+                        vehicles[index] = vehicle;
+                    }
+                } else {
+                    // Agregar nuevo vehículo
+                    vehicle.createdAt = new Date().toISOString();
+                    vehicles.push(vehicle);
+                }
+                
+                localStorage.setItem('vehicles', JSON.stringify(vehicles));
+                
+                // Limpiar formulario y recargar lista
+                document.getElementById('vehicleForm').reset();
+                editingVehicleId = null;
+                loadVehicles();
+                
+                alert(editingVehicleId ? 'Vehículo actualizado correctamente' : 'Vehículo guardado correctamente');
+            }
+
+            window.editVehicle = function(vehicleId) {
+                const vehicle = vehicles.find(v => v.id === vehicleId);
+                if (!vehicle) return;
+                
+                document.getElementById('vehicleBrand').value = vehicle.brand;
+                document.getElementById('vehicleModel').value = vehicle.model;
+                document.getElementById('plateNumber').value = vehicle.plateNumber;
+                document.getElementById('vehicleYear').value = vehicle.year;
+                document.getElementById('currentMileage').value = vehicle.mileage;
+                document.getElementById('vehicleColor').value = vehicle.color || '';
+                document.getElementById('vehicleCondition').value = vehicle.condition;
+                document.getElementById('additionalNotes').value = vehicle.notes || '';
+                
+                editingVehicleId = vehicleId;
+                
+                // Scroll al formulario
+                document.getElementById('formulario').scrollIntoView({ behavior: 'smooth' });
+            };
+
+            window.deleteVehicle = function(vehicleId) {
+                if (confirm('¿Estás seguro de que quieres eliminar este vehículo?')) {
+                    vehicles = vehicles.filter(v => v.id !== vehicleId);
+                    localStorage.setItem('vehicles', JSON.stringify(vehicles));
+                    loadVehicles();
+                    
+                    // Si estábamos editando este vehículo, limpiar el formulario
+                    if (editingVehicleId === vehicleId) {
+                        document.getElementById('vehicleForm').reset();
+                        editingVehicleId = null;
+                    }
+                }
+            };
+        });
+    </script>
+</body>
+</html>

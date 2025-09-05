@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiroo - Simulador de Estacionamiento</title>
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --secondary-color: #b71c1c;
+            --accent-color: #f44336;
+            --light-color: #121212;
+            --dark-color: #000000;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #ff5252;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+        
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+        }
+        
+        #simulator-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+        }
+        
+        #canvas-container {
+            position: relative;
+        }
+        
+        canvas {
+            background-color: #2a2a2a;
+            border: 1px solid #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            width: 300px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        .scenario-btn {
+            background-color: var(--accent-color);
+        }
+        
+        .scenario-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .mode-btn {
+            background-color: var(--warning-color);
+        }
+        
+        .mode-btn:hover {
+            background-color: #e68a00;
+        }
+        
+        #instructions {
+            background-color: #252525;
+            padding: 15px;
+            border-left: 4px solid var(--warning-color);
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        
+        #steps {
+            margin-top: 15px;
+        }
+        
+        .step {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #252525;
+            border-left: 3px solid var(--primary-color);
+            display: none;
+            color: #cccccc;
+        }
+        
+        .active-step {
+            background-color: #333;
+            font-weight: bold;
+            display: block;
+            color: var(--text-color);
+        }
+        
+        .car-details {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #cccccc;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #333;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        #timer {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .highlight {
+            background-color: var(--warning-color);
+            padding: 2px 5px;
+            border-radius: 3px;
+            animation: pulse 1.5s infinite;
+            color: #000;
+        }
+        
+        @keyframes pulse {
+            0% { background-color: var(--warning-color); }
+            50% { background-color: #ffc107; }
+            100% { background-color: var(--warning-color); }
+        }
+        
+        .tutorial-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .mode-indicator {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .tutorial-mode {
+            background-color: rgba(225, 245, 254, 0.1);
+            color: #81d4fa;
+            border: 2px solid #01579b;
+        }
+        
+        .practice-mode {
+            background-color: rgba(241, 248, 233, 0.1);
+            color: #aed581;
+            border: 2px solid #33691e;
+        }
+        
+        .success-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        h2 {
+            color: var(--text-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulador de Estacionamiento - Kiroo</h1>
+
+    <div style="margin-bottom: 20px;">
+    <button onclick="window.location.href='gamificación.html'" 
+            style="padding: 10px 20px; background-color: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        ← Volver a Gamificación
+    </button>
+</div>
+    
+    <div id="simulator-container">
+        <div id="canvas-container">
+            <canvas id="parkingCanvas" width="800" height="500"></canvas>
+            <div id="success-message" class="success-message">¡Estacionado Correctamente!</div>
+            <div id="instructions">
+                <div id="mode-indicator" class="mode-indicator tutorial-mode">Modo: Demostración Automática</div>
+                <h3>Instrucciones:</h3>
+                <p id="current-instruction">Selecciona un escenario para comenzar la demostración.</p>
+                <div class="car-details">
+                    <div>Velocidad: <span id="speed-display">0</span> km/h</div>
+                    <div>Marcha: <span id="gear-display">adelante</span></div>
+                    <div>Ángulo volante: <span id="steering-display">centro</span></div>
+                    <div>Tiempo: <span id="timer">00:00</span></div>
+                    <div class="progress-container">
+                        <div id="progress-bar" class="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h2>Escenarios</h2>
+            <button id="parallel" class="scenario-btn">En paralelo (fácil)</button>
+            <button id="perpendicular" class="scenario-btn">Perpendicular</button>
+            <button id="angle" class="scenario-btn">En ángulo (45°)</button>
+            <button id="parallelTight" class="scenario-btn">En paralelo (ajustado)</button>
+            <button id="betweenCars" class="scenario-btn">Entre vehículos</button>
+            <button id="hillParking" class="scenario-btn">En pendiente</button>
+            
+            <h2 id="scenario-title" style="margin-top: 20px;">Selecciona un escenario</h2>
+            <div id="steps">
+                <!-- Los pasos se insertarán aquí dinámicamente -->
+            </div>
+            
+            <div class="tutorial-controls">
+                <button id="prev-step" disabled>Anterior</button>
+                <button id="next-step" disabled>Siguiente</button>
+            </div>
+            
+            <button id="play-pause">Iniciar demostración</button>
+            <button id="toggle-mode" class="mode-btn">Cambiar a modo práctica</button>
+            <button id="reset-scenario">Reiniciar escenario</button>
+        </div>
+    </div>
+
+<script>
+    // Configuración del canvas
+    const canvas = document.getElementById('parkingCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Elementos de la interfaz
+    const scenarioTitle = document.getElementById('scenario-title');
+    const stepsContainer = document.getElementById('steps');
+    const prevStepBtn = document.getElementById('prev-step');
+    const nextStepBtn = document.getElementById('next-step');
+    const playPauseBtn = document.getElementById('play-pause');
+    const toggleModeBtn = document.getElementById('toggle-mode');
+    const resetBtn = document.getElementById('reset-scenario');
+    const speedDisplay = document.getElementById('speed-display');
+    const gearDisplay = document.getElementById('gear-display');
+    const steeringDisplay = document.getElementById('steering-display');
+    const timerDisplay = document.getElementById('timer');
+    const progressBar = document.getElementById('progress-bar');
+    const currentInstruction = document.getElementById('current-instruction');
+    const modeIndicator = document.getElementById('mode-indicator');
+    const successMessage = document.getElementById('success-message');
+    
+    // Constantes
+    const CAR_LENGTH = 80;
+    const CAR_WIDTH = 40;
+    const WHEEL_RADIUS = 8;
+    const CAR_SPEED = 1.5;
+    const STEERING_ANGLE = 3; // Grados
+    const MAX_REVERSE_STEPS = 100; // Máximo de pasos en reversa por paso
+    
+    // Estados del simulador
+    const ParkingScenario = {
+        PARALLEL: 1,
+        PERPENDICULAR: 2,
+        ANGLE: 3,
+        PARALLEL_TIGHT: 4,
+        BETWEEN_CARS: 5,
+        HILL_PARKING: 6
+    };
+    
+    // Modos de operación
+    const OperationMode = {
+        TUTORIAL: 1,
+        PRACTICE: 2
+    };
+    
+    // Variables del juego
+    let car = {
+        x: 100,
+        y: canvas.height / 2,
+        angle: 0, // Grados, 0 apunta a la derecha
+        steering: 0, // -1 a 1 (izquierda a derecha)
+        speed: 0,
+        reversing: false,
+        wheelAngle: 0 // Ángulo de las ruedas delanteras
+    };
+    
+    let initialCarState = {...car};
+    let parkingSpot = null;
+    let obstacles = [];
+    let currentScenario = null;
+    let currentStep = 0;
+    let steps = [];
+    let tutorialMode = true;
+    let tutorialPlaying = false;
+    let tutorialInstructions = [];
+    let tutorialStep = 0;
+    let tutorialSubstep = 0;
+    let timeElapsed = 0;
+    let timerInterval;
+    let reverseStepsCount = 0;
+    let isParked = false;
+    
+    // Controles
+    const keys = {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false,
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+        space: false,
+        r: false
+    };
+    
+    // Event listeners para controles
+    document.addEventListener('keydown', (e) => {
+        if (keys.hasOwnProperty(e.key)) {
+            keys[e.key] = true;
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        if (keys.hasOwnProperty(e.key)) {
+            keys[e.key] = false;
+            e.preventDefault();
+        }
+    });
+    
+    // Botones de escenarios
+    document.getElementById('parallel').addEventListener('click', () => createScenario(ParkingScenario.PARALLEL));
+    document.getElementById('perpendicular').addEventListener('click', () => createScenario(ParkingScenario.PERPENDICULAR));
+    document.getElementById('angle').addEventListener('click', () => createScenario(ParkingScenario.ANGLE));
+    document.getElementById('parallelTight').addEventListener('click', () => createScenario(ParkingScenario.PARALLEL_TIGHT));
+    document.getElementById('betweenCars').addEventListener('click', () => createScenario(ParkingScenario.BETWEEN_CARS));
+    document.getElementById('hillParking').addEventListener('click', () => createScenario(ParkingScenario.HILL_PARKING));
+    
+    // Botones de control
+    prevStepBtn.addEventListener('click', prevStep);
+    nextStepBtn.addEventListener('click', nextStep);
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    toggleModeBtn.addEventListener('click', toggleMode);
+    resetBtn.addEventListener('click', resetScenario);
+    
+    // Función para crear escenarios
+    function createScenario(scenarioType) {
+        resetScenario();
+        currentScenario = scenarioType;
+        obstacles = [];
+        tutorialPlaying = false;
+        playPauseBtn.textContent = "Iniciar demostración";
+        isParked = false;
+        successMessage.style.display = 'none';
+        
+        // Guardar estado inicial del vehículo
+        initialCarState = {
+            x: 100,
+            y: canvas.height / 2,
+            angle: 0,
+            steering: 0,
+            speed: 0,
+            reversing: false,
+            wheelAngle: 0
+        };
+        
+        // Configurar el vehículo inicial
+        car = {...initialCarState};
+        
+        // Configurar pasos según el escenario
+        steps = [];
+        
+        switch(scenarioType) {
+            case ParkingScenario.PARALLEL:
+                scenarioTitle.textContent = "Estacionamiento en Paralelo (Fácil)";
+                parkingSpot = createParkingSpot(650, canvas.height / 2, 90, CAR_LENGTH * 1.5, CAR_WIDTH * 2.5);
+                
+                steps = [
+                    "1. Acércate al espacio en paralelo a unos 50 cm del vehículo de adelante",
+                    "2. Detente cuando tu espejo retrovisor esté alineado con el del otro vehículo",
+                    "3. Gira el volante completamente hacia la derecha y comienza a retroceder",
+                    "4. Cuando veas el faro izquierdo del vehículo de atrás, gira el volante completamente a la izquierda",
+                    "5. Continúa retrocediendo hasta centrarte en el espacio",
+                    "6. Ajusta tu posición si es necesario"
+                ];
+                
+                // Instrucciones para el tutorial automático
+                tutorialInstructions = [
+                    { instruction: "Conduce hacia adelante para acercarte al espacio de estacionamiento", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 100, targetX: 400, targetY: canvas.height / 2 - 50 } },
+                    { instruction: "Detente cuando estés alineado con el vehículo delantero", 
+                      action: { speed: 0, steering: 0, reversing: false, duration: 30 } },
+                    { instruction: "Gira el volante completamente a la derecha y comienza a retroceder", 
+                      action: { speed: -CAR_SPEED, steering: 1, reversing: true, duration: 60, targetX: 550, targetY: canvas.height / 2 - 30 } },
+                    { instruction: "Cuando estés en posición, gira el volante completamente a la izquierda", 
+                      action: { speed: -CAR_SPEED, steering: -1, reversing: true, duration: 60, targetX: 650, targetY: canvas.height / 2 } },
+                    { instruction: "Continúa retrocediendo hasta centrarte en el espacio", 
+                      action: { speed: -CAR_SPEED, steering: 0, reversing: true, duration: 30, targetX: 650, targetY: canvas.height / 2 } },
+                    { instruction: "Ajusta tu posición si es necesario", 
+                      action: { speed: CAR_SPEED, steering: 0.5, reversing: false, duration: 15 } }
+                ];
+                break;
+                
+            case ParkingScenario.PERPENDICULAR:
+                scenarioTitle.textContent = "Estacionamiento Perpendicular";
+                parkingSpot = createParkingSpot(650, canvas.height / 2, 0, CAR_LENGTH * 1.2, CAR_WIDTH * 2);
+                
+                steps = [
+                    "1. Posiciónate a unos 2 metros del espacio",
+                    "2. Alinea tu espejo retrovisor con el primer vehículo del espacio",
+                    "3. Gira el volante completamente hacia el espacio",
+                    "4. Avanza lentamente hacia el espacio",
+                    "5. Endereza las ruedas cuando tu vehículo esté centrado",
+                    "6. Ajusta tu posición si es necesario"
+                ];
+                
+                tutorialInstructions = [
+                    { instruction: "Conduce hacia adelante para posicionarte frente al espacio", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 80, targetX: 500, targetY: canvas.height / 2 - 100 } },
+                    { instruction: "Detente y alinea tu espejo con el primer vehículo", 
+                      action: { speed: 0, steering: 0, reversing: false, duration: 30 } },
+                    { instruction: "Gira el volante completamente hacia el espacio", 
+                      action: { speed: CAR_SPEED, steering: 1, reversing: false, duration: 40, targetX: 650, targetY: canvas.height / 2 - 30 } },
+                    { instruction: "Avanza lentamente hacia el espacio", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 30, targetX: 650, targetY: canvas.height / 2 } },
+                    { instruction: "Endereza las ruedas cuando estés centrado", 
+                      action: { speed: CAR_SPEED, steering: -0.5, reversing: false, duration: 20 } },
+                    { instruction: "Ajusta tu posición si es necesario", 
+                      action: { speed: -CAR_SPEED, steering: 0.3, reversing: true, duration: 15 } }
+                ];
+                break;
+                
+            case ParkingScenario.ANGLE:
+                scenarioTitle.textContent = "Estacionamiento en Ángulo (45°)";
+                parkingSpot = createParkingSpot(650, canvas.height / 2, 45, CAR_LENGTH * 1.3, CAR_WIDTH * 2);
+                
+                steps = [
+                    "1. Acércate al espacio desde el lado opuesto al ángulo",
+                    "2. Gira el volante cuando tu espejo retrovisor pase el primer vehículo",
+                    "3. Avanza lentamente hacia el espacio",
+                    "4. Endereza las ruedas cuando tu vehículo esté alineado",
+                    "5. Ajusta tu posición si es necesario"
+                ];
+                
+                tutorialInstructions = [
+                    { instruction: "Conduce hacia adelante acercándote al espacio", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 80, targetX: 500, targetY: canvas.height / 2 - 80 } },
+                    { instruction: "Gira el volante cuando pases el primer vehículo", 
+                      action: { speed: CAR_SPEED, steering: 0.8, reversing: false, duration: 40, targetX: 600, targetY: canvas.height / 2 - 40 } },
+                    { instruction: "Avanza lentamente hacia el espacio", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 40, targetX: 650, targetY: canvas.height / 2 } },
+                    { instruction: "Endereza las ruedas para alinearte", 
+                      action: { speed: CAR_SPEED, steering: -0.5, reversing: false, duration: 30 } },
+                    { instruction: "Ajusta tu posición si es necesario", 
+                      action: { speed: -CAR_SPEED, steering: 0.2, reversing: true, duration: 20 } }
+                ];
+                break;
+                
+            case ParkingScenario.PARALLEL_TIGHT:
+                scenarioTitle.textContent = "Estacionamiento en Paralelo (Ajustado)";
+                parkingSpot = createParkingSpot(650, canvas.height / 2, 90, CAR_LENGTH * 1.1, CAR_WIDTH * 2.2);
+                obstacles.push(createObstacle(650, canvas.height / 2 - CAR_WIDTH * 2.5, 90));
+                obstacles.push(createObstacle(650, canvas.height / 2 + CAR_WIDTH * 2.5, 90));
+                
+                steps = [
+                    "1. Acércate muy cerca del vehículo de adelante (30 cm)",
+                    "2. Detente cuando tu espejo retrovisor esté alineado con el del otro vehículo",
+                    "3. Gira el volante completamente hacia la derecha y comienza a retroceder",
+                    "4. Cuando veas el faro izquierdo del vehículo de atrás, gira el volante completamente a la izquierda",
+                    "5. Retrocede hasta casi tocar el vehículo de atrás",
+                    "6. Avanza hacia adelante girando a la derecha para centrarte",
+                    "7. Repite si es necesario para ajustar la posición"
+                ];
+                
+                tutorialInstructions = [
+                    { instruction: "Acércate muy cerca del vehículo de adelante", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 90, targetX: 400, targetY: canvas.height / 2 - 60 } },
+                    { instruction: "Detente cuando estés alineado", 
+                      action: { speed: 0, steering: 0, reversing: false, duration: 30 } },
+                    { instruction: "Gira el volante completamente a la derecha y retrocede", 
+                      action: { speed: -CAR_SPEED, steering: 1, reversing: true, duration: 50, targetX: 550, targetY: canvas.height / 2 - 40 } },
+                    { instruction: "Gira el volante completamente a la izquierda y continúa retrocediendo", 
+                      action: { speed: -CAR_SPEED, steering: -1, reversing: true, duration: 50, targetX: 650, targetY: canvas.height / 2 } },
+                    { instruction: "Avanza hacia adelante girando a la derecha para centrarte", 
+                      action: { speed: CAR_SPEED, steering: 0.7, reversing: false, duration: 30 } },
+                    { instruction: "Realiza ajustes finales", 
+                      action: { speed: -CAR_SPEED, steering: -0.3, reversing: true, duration: 20 } }
+                ];
+                break;
+                
+            case ParkingScenario.BETWEEN_CARS:
+                scenarioTitle.textContent = "Estacionamiento Entre Vehículos";
+                parkingSpot = createParkingSpot(650, canvas.height / 2, 90, CAR_LENGTH * 1.2, CAR_WIDTH * 2.3);
+                obstacles.push(createObstacle(650, canvas.height / 2 - CAR_WIDTH * 2.5, 90));
+                obstacles.push(createObstacle(650, canvas.height / 2 + CAR_WIDTH * 2.5, 90));
+                obstacles.push(createObstacle(550, canvas.height / 2, 0));
+                
+                steps = [
+                    "1. Detente al lado del vehículo de adelante (50 cm de distancia)",
+                    "2. Retrocede en línea recta hasta que tu espejo esté alineado con su paragolpes trasero",
+                    "3. Gira el volante completamente hacia el espacio y continúa retrocediendo",
+                    "4. Cuando tu vehículo forme un ángulo de 45°, endereza las ruedas",
+                    "5. Continúa retrocediendo hasta que el paragolpes delantero esté alineado con el del vehículo de adelante",
+                    "6. Gira el volante completamente en dirección opuesta y continúa retrocediendo",
+                    "7. Ajusta la posición si es necesario"
+                ];
+                
+                tutorialInstructions = [
+                    { instruction: "Detente al lado del vehículo de adelante", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 70, targetX: 400, targetY: canvas.height / 2 - 60 } },
+                    { instruction: "Retrocede en línea recta hasta alinearte", 
+                      action: { speed: -CAR_SPEED, steering: 0, reversing: true, duration: 40, targetX: 350, targetY: canvas.height / 2 - 60 } },
+                    { instruction: "Gira el volante completamente hacia el espacio", 
+                      action: { speed: -CAR_SPEED, steering: 1, reversing: true, duration: 40, targetX: 400, targetY: canvas.height / 2 - 30 } },
+                    { instruction: "Endereza las ruedas al alcanzar 45°", 
+                      action: { speed: -CAR_SPEED, steering: -0.8, reversing: true, duration: 30, targetX: 500, targetY: canvas.height / 2 - 10 } },
+                    { instruction: "Gira el volante en dirección opuesta y continúa retrocediendo", 
+                      action: { speed: -CAR_SPEED, steering: -1, reversing: true, duration: 40, targetX: 650, targetY: canvas.height / 2 } },
+                    { instruction: "Ajusta la posición final", 
+                      action: { speed: CAR_SPEED, steering: 0.4, reversing: false, duration: 20 } }
+                ];
+                break;
+                
+            case ParkingScenario.HILL_PARKING:
+                scenarioTitle.textContent = "Estacionamiento en Pendiente";
+                parkingSpot = createParkingSpot(650, canvas.height / 2, 90, CAR_LENGTH * 1.5, CAR_WIDTH * 2.5);
+                
+                steps = [
+                    "1. Acércate al espacio como en estacionamiento paralelo normal",
+                    "2. Gira las ruedas hacia la acera si es pendiente ascendente, o hacia la calle si es descendente",
+                    "3. Detén el vehículo completamente",
+                    "4. Aplica el freno de mano",
+                    "5. Pon la marcha en primera (ascendente) o reversa (descendente)",
+                    "6. Al salir, suelta el freno de mano mientras aplicas presión al acelerador"
+                ];
+                
+                tutorialInstructions = [
+                    { instruction: "Acércate al espacio como en estacionamiento paralelo", 
+                      action: { speed: CAR_SPEED, steering: 0, reversing: false, duration: 80, targetX: 400, targetY: canvas.height / 2 - 50 } },
+                    { instruction: "Gira las ruedas hacia la acera (pendiente ascendente)", 
+                      action: { speed: 0, steering: -1, reversing: false, duration: 30 } },
+                    { instruction: "Detén completamente el vehículo", 
+                      action: { speed: 0, steering: 0, reversing: false, duration: 20 } },
+                    { instruction: "Aplica el freno de mano y pon primera marcha", 
+                      action: { speed: 0, steering: 0, reversing: false, duration: 40 } },
+                    { instruction: "Para salir, suelta el freno y acelera gradualmente", 
+                      action: { speed: CAR_SPEED, steering: 0.5, reversing: false, duration: 30, targetX: 500, targetY: canvas.height / 2 - 30 } }
+                ];
+                break;
+        }
+        
+        // Mostrar pasos
+        renderSteps();
+        currentStep = 0;
+        updateStepDisplay();
+        
+        // Iniciar temporizador
+        startTimer();
+        
+        // Habilitar controles
+        prevStepBtn.disabled = true;
+        nextStepBtn.disabled = steps.length <= 1;
+        playPauseBtn.disabled = false;
+        
+        // Actualizar instrucción actual
+        currentInstruction.innerHTML = "Selecciona <span class='highlight'>Iniciar demostración</span> para ver el tutorial paso a paso.";
+    }
+    
+    function createParkingSpot(x, y, angle, length, width) {
+        return {
+            x, y, angle, length, width,
+            occupied: false,
+            progress: 0
+        };
+    }
+    
+    function createObstacle(x, y, angle) {
+        return {
+            x, y, angle,
+            length: CAR_LENGTH,
+            width: CAR_WIDTH,
+            color: '#666'
+        };
+    }
+    
+    function renderSteps() {
+        stepsContainer.innerHTML = '';
+        steps.forEach((step, index) => {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'step';
+            stepEl.textContent = step;
+            stepEl.id = `step-${index}`;
+            stepsContainer.appendChild(stepEl);
+        });
+    }
+    
+    function updateStepDisplay() {
+        document.querySelectorAll('.step').forEach((step, index) => {
+            if (index === currentStep) {
+                step.classList.add('active-step');
+            } else {
+                step.classList.remove('active-step');
+            }
+        });
+        
+        prevStepBtn.disabled = currentStep === 0;
+        nextStepBtn.disabled = currentStep === steps.length - 1;
+        
+        // Actualizar barra de progreso
+        const progress = ((currentStep + 1) / steps.length) * 100;
+        progressBar.style.width = `${progress}%`;
+    }
+    
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            updateStepDisplay();
+            
+            // Si estamos en modo tutorial, también retroceder la demostración
+            if (tutorialMode && tutorialPlaying) {
+                tutorialStep = Math.max(0, tutorialStep - 1);
+                tutorialSubstep = 0;
+            }
+        }
+    }
+    
+    function nextStep() {
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            updateStepDisplay();
+            
+            // Si estamos en modo tutorial, también avanzar la demostración
+            if (tutorialMode && tutorialPlaying) {
+                tutorialStep = Math.min(tutorialInstructions.length - 1, tutorialStep + 1);
+                tutorialSubstep = 0;
+            }
+        }
+    }
+    
+    function togglePlayPause() {
+        if (!tutorialInstructions.length) return;
+        
+        tutorialPlaying = !tutorialPlaying;
+        playPauseBtn.textContent = tutorialPlaying ? "Pausar demostración" : "Iniciar demostración";
+        
+        if (tutorialPlaying && tutorialStep >= tutorialInstructions.length) {
+            // Reiniciar si llegamos al final
+            tutorialStep = 0;
+            tutorialSubstep = 0;
+        }
+    }
+    
+    function toggleMode() {
+        tutorialMode = !tutorialMode;
+        
+        if (tutorialMode) {
+            toggleModeBtn.textContent = "Cambiar a modo práctica";
+            modeIndicator.textContent = "Modo: Demostración Automática";
+            modeIndicator.className = "mode-indicator tutorial-mode";
+            currentInstruction.innerHTML = "Visualizando demostración automática. Usa los botones para controlar.";
+            
+            // Detener cualquier control manual
+            tutorialPlaying = false;
+            playPauseBtn.textContent = "Iniciar demostración";
+        } else {
+            toggleModeBtn.textContent = "Cambiar a modo demostración";
+            modeIndicator.textContent = "Modo: Práctica Libre";
+            modeIndicator.className = "mode-indicator practice-mode";
+            currentInstruction.innerHTML = "Modo práctica. Usa las <span class='highlight'>teclas W/A/S/D o flechas</span> para mover el vehículo. <span class='highlight'>Espacio</span> para cambiar marcha.";
+            
+            // Detener la demostración automática
+            tutorialPlaying = false;
+            playPauseBtn.textContent = "Iniciar demostración";
+        }
+    }
+    
+    function resetScenario() {
+        if (currentScenario) {
+            // Restaurar el estado inicial del vehículo
+            car = {...initialCarState};
+            
+            // Reiniciar variables de control
+            tutorialPlaying = false;
+            tutorialStep = 0;
+            tutorialSubstep = 0;
+            isParked = false;
+            parkingSpot.occupied = false;
+            parkingSpot.progress = 0;
+            
+            // Actualizar UI
+            playPauseBtn.textContent = "Iniciar demostración";
+            successMessage.style.display = 'none';
+            currentStep = 0;
+            updateStepDisplay();
+            
+            // Reiniciar temporizador
+            clearInterval(timerInterval);
+            timeElapsed = 0;
+            updateTimerDisplay();
+            startTimer();
+            
+            currentInstruction.innerHTML = "Escenario reiniciado. Selecciona <span class='highlight'>Iniciar demostración</span> para ver el tutorial paso a paso.";
+        }
+    }
+    
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeElapsed = 0;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            timeElapsed++;
+            updateTimerDisplay();
+        }, 1000);
+    }
+    
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeElapsed / 60);
+        const seconds = timeElapsed % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Función para actualizar el estado del vehículo
+    function updateCar() {
+        if (tutorialMode && tutorialPlaying) {
+            runTutorial();
+            return;
+        }
+        
+        if (!tutorialMode) {
+            // Modo práctica - controles manuales
+            handleManualControls();
+        }
+        
+        // Verificar si el vehículo está en el estacionamiento
+        if (parkingSpot && !parkingSpot.occupied) {
+            parkingSpot.occupied = checkParking();
+            if (parkingSpot.occupied && !isParked) {
+                parkingSpot.progress = 100;
+                isParked = true;
+                successMessage.style.display = 'block';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+            } else if (!parkingSpot.occupied) {
+                // Calcular progreso aproximado
+                const carRect = getCarRect(car);
+                const spotRect = getCarRect(parkingSpot);
+                
+                const overlap = calculateOverlap(carRect, spotRect);
+                const angleDiff = Math.min(Math.abs(car.angle - parkingSpot.angle), 
+                                   360 - Math.abs(car.angle - parkingSpot.angle));
+                
+                parkingSpot.progress = Math.min(100, overlap * 100 * (1 - angleDiff / 180));
+            }
+        }
+        
+        // Actualizar displays
+        speedDisplay.textContent = (Math.abs(car.speed) * 20).toFixed(1);
+        gearDisplay.textContent = car.reversing ? "reversa" : "adelante";
+        steeringDisplay.textContent = 
+            car.steering === 0 ? "centro" : 
+            car.steering > 0 ? `derecha (${Math.round(car.wheelAngle)}°)` : 
+            `izquierda (${Math.round(-car.wheelAngle)}°)`;
+    }
+    
+    function handleManualControls() {
+        // Manejar controles de dirección
+        car.steering = 0;
+        if (keys.ArrowLeft || keys.a) car.steering = -1;
+        if (keys.ArrowRight || keys.d) car.steering = 1;
+        
+        // Manejar velocidad (adelante/atrás)
+        if (keys.ArrowUp || keys.w) {
+            car.speed = CAR_SPEED;
+            car.reversing = false;
+        } else if (keys.ArrowDown || keys.s) {
+            car.speed = CAR_SPEED;
+            car.reversing = true;
+            reverseStepsCount++;
+            
+            // Limitar pasos en reversa por paso (para evitar abuso)
+            if (reverseStepsCount > MAX_REVERSE_STEPS) {
+                car.speed = 0;
+            }
+        } else {
+            car.speed = 0;
+            reverseStepsCount = 0;
+        }
+        
+        // Cambiar marcha (reversa/adelante) con la barra espaciadora
+        if (keys.space) {
+            car.reversing = !car.reversing;
+            keys.space = false;
+        }
+        
+        if (keys.r) {
+            // Reiniciar paso actual
+            keys.r = false;
+            resetCurrentStep();
+        }
+        
+        // Actualizar ángulo de las ruedas delanteras
+        car.wheelAngle = car.steering * 30; // Máximo 30 grados de giro
+        
+        // Convertir ángulo a radianes
+        const rad = Math.PI * car.angle / 180;
+        
+        // Mover el vehículo
+        car.x += car.speed * Math.cos(rad) * (car.reversing ? -1 : 1);
+        car.y += car.speed * Math.sin(rad) * (car.reversing ? -1 : 1);
+        
+        // Aplicar dirección
+        if (car.speed !== 0) {
+            let turnRate = STEERING_ANGLE * car.steering;
+            if (car.reversing) turnRate *= -1;
+            car.angle += turnRate * (Math.abs(car.speed) / CAR_SPEED);
+            car.angle %= 360;
+        }
+    }
+    
+    function runTutorial() {
+        if (tutorialStep >= tutorialInstructions.length) {
+            // Tutorial completado
+            tutorialPlaying = false;
+            playPauseBtn.textContent = "Repetir demostración";
+            currentInstruction.innerHTML = "¡Tutorial completado! Puedes <span class='highlight'>repetir la demostración</span> o cambiar al <span class='highlight'>modo práctica</span>.";
+            return;
+        }
+        
+        const instruction = tutorialInstructions[tutorialStep];
+        
+        // Mostrar instrucción actual
+        currentInstruction.innerHTML = `<span class='highlight'>Paso ${tutorialStep + 1}:</span> ${instruction.instruction}`;
+        
+        // Ejecutar acción
+        car.speed = instruction.action.speed;
+        car.steering = instruction.action.steering;
+        car.reversing = instruction.action.reversing;
+        car.wheelAngle = car.steering * 30;
+        
+        // Si hay un objetivo definido, ajustar la dirección para alcanzarlo
+        if (instruction.action.targetX !== undefined && instruction.action.targetY !== undefined) {
+            adjustDirectionToTarget(instruction.action.targetX, instruction.action.targetY);
+        }
+        
+        // Actualizar vehículo
+        const rad = Math.PI * car.angle / 180;
+        car.x += car.speed * Math.cos(rad) * (car.reversing ? -1 : 1);
+        car.y += car.speed * Math.sin(rad) * (car.reversing ? -1 : 1);
+        
+        if (car.speed !== 0) {
+            let turnRate = STEERING_ANGLE * car.steering;
+            if (car.reversing) turnRate *= -1;
+            car.angle += turnRate * (Math.abs(car.speed) / CAR_SPEED);
+            car.angle %= 360;
+        }
+        
+        instruction.action.duration--;
+        if (instruction.action.duration <= 0) {
+            tutorialStep++;
+            tutorialSubstep = 0;
+            
+            // Avanzar también el paso visual si corresponde
+            if (tutorialStep < steps.length) {
+                currentStep = tutorialStep;
+                updateStepDisplay();
+            }
+        }
+        
+        // Actualizar displays
+        speedDisplay.textContent = (Math.abs(car.speed) * 20).toFixed(1);
+        gearDisplay.textContent = car.reversing ? "reversa" : "adelante";
+        steeringDisplay.textContent = 
+            car.steering === 0 ? "centro" : 
+            car.steering > 0 ? `derecha (${Math.round(car.wheelAngle)}°)` : 
+            `izquierda (${Math.round(-car.wheelAngle)}°)`;
+    }
+    
+    function adjustDirectionToTarget(targetX, targetY) {
+        // Calcular ángulo hacia el objetivo
+        const dx = targetX - car.x;
+        const dy = targetY - car.y;
+        const targetAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+        
+        // Calcular diferencia de ángulo
+        let angleDiff = targetAngle - car.angle;
+        
+        // Normalizar la diferencia de ángulo (-180 a 180)
+        while (angleDiff > 180) angleDiff -= 360;
+        while (angleDiff < -180) angleDiff += 360;
+        
+        // Ajustar la dirección según la diferencia de ángulo
+        if (angleDiff > 10) {
+            car.steering = 1; // Girar a la derecha
+        } else if (angleDiff < -10) {
+            car.steering = -1; // Girar a la izquierda
+        } else {
+            car.steering = 0; // Mantener dirección
+        }
+        
+        car.wheelAngle = car.steering * 30;
+    }
+    
+    function resetCurrentStep() {
+        // Reiniciar a la posición inicial del paso actual
+        // Esta función es un placeholder para una implementación más completa
+        car.x = 100;
+        car.y = canvas.height / 2;
+        car.angle = 0;
+        car.steering = 0;
+        car.speed = 0;
+        car.reversing = false;
+        car.wheelAngle = 0;
+    }
+    
+    function checkParking() {
+        if (!parkingSpot) return false;
+        
+        const carRect = getCarRect(car);
+        const spotRect = getCarRect(parkingSpot);
+        
+        // Verificar si el vehículo está dentro del espacio
+        const isInside = isRectInsideRect(carRect, spotRect);
+        
+        // Verificar alineación angular (margen de ±15 grados)
+        const angleDiff = Math.min(Math.abs(car.angle - parkingSpot.angle), 
+                            360 - Math.abs(car.angle - parkingSpot.angle));
+        const isAligned = angleDiff <= 15;
+        
+        return isInside && isAligned;
+    }
+    
+    function getCarRect(carObj) {
+        const cos = Math.cos(Math.PI * carObj.angle / 180);
+        const sin = Math.sin(Math.PI * carObj.angle / 180);
+        
+        const halfLength = carObj.length ? carObj.length / 2 : CAR_LENGTH / 2;
+        const halfWidth = carObj.width ? carObj.width / 2 : CAR_WIDTH / 2;
+        
+        return {
+            x: carObj.x,
+            y: carObj.y,
+            angle: carObj.angle,
+            points: [
+                { x: carObj.x + halfLength * cos - halfWidth * sin, 
+                  y: carObj.y + halfLength * sin + halfWidth * cos },
+                { x: carObj.x + halfLength * cos + halfWidth * sin, 
+                  y: carObj.y + halfLength * sin - halfWidth * cos },
+                { x: carObj.x - halfLength * cos + halfWidth * sin, 
+                  y: carObj.y - halfLength * sin - halfWidth * cos },
+                { x: carObj.x - halfLength * cos - halfWidth * sin, 
+                  y: carObj.y - halfLength * sin + halfWidth * cos }
+            ]
+        };
+    }
+    
+    function isRectInsideRect(inner, outer) {
+        // Verificar si todos los puntos del rectángulo interior están dentro del exterior
+        return inner.points.every(point => isPointInPolygon(point, outer.points));
+    }
+    
+    function isPointInPolygon(point, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x, yi = polygon[i].y;
+            const xj = polygon[j].x, yj = polygon[j].y;
+            
+            const intersect = ((yi > point.y) !== (yj > point.y))
+                && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+    
+    function calculateOverlap(rect1, rect2) {
+        // Calcular área de superposición aproximada
+        const area1 = calculatePolygonArea(rect1.points);
+        const area2 = calculatePolygonArea(rect2.points);
+        
+        // Calcular intersección aproximada
+        const intersection = rect1.points.filter(p => isPointInPolygon(p, rect2.points)).length / 4;
+        
+        return intersection;
+    }
+    
+    function calculatePolygonArea(points) {
+        let area = 0;
+        const n = points.length;
+        
+        for (let i = 0; i < n; i++) {
+            const j = (i + 1) % n;
+            area += points[i].x * points[j].y;
+            area -= points[j].x * points[i].y;
+        }
+        
+        return Math.abs(area) / 2;
+    }
+    
+    // Función para dibujar en el canvas
+    function draw() {
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar carretera
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar línea central
+        ctx.strokeStyle = '#666';
+        ctx.setLineDash([20, 15]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Dibujar espacio de estacionamiento
+        if (parkingSpot) {
+            ctx.save();
+            ctx.translate(parkingSpot.x, parkingSpot.y);
+            ctx.rotate(Math.PI * parkingSpot.angle / 180);
+            
+            // Dibujar espacio
+            ctx.fillStyle = parkingSpot.occupied ? 'rgba(76, 175, 80, 0.3)' : 'rgba(85, 85, 85, 0.3)';
+            ctx.fillRect(-parkingSpot.length / 2, -parkingSpot.width / 2, 
+                         parkingSpot.length, parkingSpot.width);
+            
+            // Dibujar bordes
+            ctx.strokeStyle = parkingSpot.occupied ? '#4CAF50' : '#555';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-parkingSpot.length / 2, -parkingSpot.width / 2, 
+                           parkingSpot.length, parkingSpot.width);
+            
+            // Dibujar líneas internas
+            ctx.strokeStyle = '#777';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(-parkingSpot.length / 2, 0);
+            ctx.lineTo(parkingSpot.length / 2, 0);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Dibujar porcentaje de estacionamiento
+            if (!parkingSpot.occupied && parkingSpot.progress > 0) {
+                ctx.fillStyle = 'rgba(76, 175, 80, 0.7)';
+                ctx.fillRect(-parkingSpot.length / 2, -parkingSpot.width / 2, 
+                             parkingSpot.length * (parkingSpot.progress / 100), parkingSpot.width);
+            }
+            
+            ctx.restore();
+        }
+        
+        // Dibujar obstáculos
+        obstacles.forEach(obstacle => {
+            ctx.save();
+            ctx.translate(obstacle.x, obstacle.y);
+            ctx.rotate(Math.PI * obstacle.angle / 180);
+            
+            ctx.fillStyle = obstacle.color || '#666';
+            ctx.fillRect(-obstacle.length / 2, -obstacle.width / 2, 
+                         obstacle.length, obstacle.width);
+            
+            // Detalles del obstáculo
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-obstacle.length / 2 + 5, -obstacle.width / 2 + 5, 10, 10);
+            ctx.fillRect(obstacle.length / 2 - 15, -obstacle.width / 2 + 5, 10, 10);
+            
+            ctx.restore();
+        });
+        
+        // Dibujar vehículo
+        ctx.save();
+        ctx.translate(car.x, car.y);
+        ctx.rotate(Math.PI * car.angle / 180);
+        
+        // Cuerpo del vehículo
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(-CAR_LENGTH / 2, -CAR_WIDTH / 2, CAR_LENGTH, CAR_WIDTH);
+        
+        // Ventanas
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(-CAR_LENGTH / 2 + 5, -CAR_WIDTH / 2 + 5, CAR_LENGTH - 30, CAR_WIDTH - 10);
+        
+        // Ruedas
+        ctx.fillStyle = '#222';
+        
+        // Ruedas delanteras
+        const wheelOffset = CAR_LENGTH / 2 - WHEEL_RADIUS - 5;
+        const wheelY = CAR_WIDTH / 2 - WHEEL_RADIUS - 2;
+        
+        // Rueda delantera izquierda
+        ctx.save();
+        ctx.translate(-wheelOffset, -wheelY);
+        ctx.rotate(Math.PI * car.wheelAngle / 180);
+        ctx.fillRect(-WHEEL_RADIUS, -WHEEL_RADIUS / 2, WHEEL_RADIUS * 2, WHEEL_RADIUS);
+        ctx.restore();
+        
+        // Rueda delantera derecha
+        ctx.save();
+        ctx.translate(-wheelOffset, wheelY);
+        ctx.rotate(Math.PI * car.wheelAngle / 180);
+        ctx.fillRect(-WHEEL_RADIUS, -WHEEL_RADIUS / 2, WHEEL_RADIUS * 2, WHEEL_RADIUS);
+        ctx.restore();
+        
+        // Ruedas traseras
+        ctx.fillRect(wheelOffset - WHEEL_RADIUS * 2, -wheelY, WHEEL_RADIUS * 2, WHEEL_RADIUS);
+        ctx.fillRect(wheelOffset - WHEEL_RADIUS * 2, wheelY - WHEEL_RADIUS, WHEEL_RADIUS * 2, WHEEL_RADIUS);
+        
+        // Luces
+        ctx.fillStyle = car.reversing ? '#fff' : '#ffeb3b';
+        ctx.fillRect(-CAR_LENGTH / 2, -CAR_WIDTH / 2 + 5, 5, 5);
+        ctx.fillRect(-CAR_LENGTH / 2, CAR_WIDTH / 2 - 10, 5, 5);
+        
+        // Luces de reversa
+        if (car.reversing) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(CAR_LENGTH / 2 - 5, -CAR_WIDTH / 2 + 5, 5, 5);
+            ctx.fillRect(CAR_LENGTH / 2 - 5, CAR_WIDTH / 2 - 10, 5, 5);
+        }
+        
+        ctx.restore();
+    }
+    
+    // Bucle principal
+    function gameLoop() {
+        updateCar();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // Iniciar el bucle del juego
+    gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoManager - Agenda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --secondary-color: #b71c1c;
+            --accent-color: #f44336;
+            --light-color: #121212;
+            --dark-color: #000000;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #ff5252;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--text-color) !important;
+        }
+
+        .navbar-brand i {
+            margin-right: 8px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-color) !important;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .content-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            margin-bottom: 0;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        
+        .section-header h2 i {
+            margin-right: 10px;
+        }
+
+        .btn-back {
+            margin-right: 15px;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-back:hover {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+        }
+
+        /* Calendario */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-header {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .calendar-day {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-color);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .calendar-day:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .calendar-day.current {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .calendar-day.has-events {
+            position: relative;
+        }
+
+        .calendar-day.has-events::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+        }
+
+        /* Lista de eventos */
+        .event-item {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .event-date {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .event-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .event-details {
+            color: #cccccc;
+            font-size: 0.9rem;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+        
+        .card-header {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+        
+        /* Formularios */
+        .form-control, .form-select {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: var(--text-color);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #2a2a2a;
+            border-color: var(--primary-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.25rem rgba(211, 47, 47, 0.25);
+        }
+        
+        .form-label {
+            color: var(--text-color);
+        }
+        
+        /* Modal */
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-close {
+            filter: invert(1);
+        }
+
+        footer {
+            background-color: var(--dark-color);
+            border-top: 1px solid #333;
+        }
+
+        footer h5 {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        footer a {
+            text-decoration: none;
+            transition: color 0.2s;
+            color: #cccccc !important;
+        }
+
+        footer a:hover {
+            color: var(--accent-color) !important;
+        }
+        
+        footer p {
+            color: #cccccc;
+        }
+        
+        /* Botones */
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--text-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-outline-danger {
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-outline-danger:hover {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: var(--text-color);
+        }
+        
+        /* Textos generales */
+        h4, h5, h6 {
+            color: var(--text-color);
+        }
+        
+        .text-muted {
+            color: #888 !important;
+        }
+        
+        .border.rounded {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-car-front-fill"></i> Kiroo
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="agenda.html">Agenda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="gamificación.html">Gamificación</a></li>
+                    <li class="nav-item"><a class="nav-link" href="vehiculos.html">Mis Vehículos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="emergencias.html">Emergencias</a></li>
+                </ul>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-sliders"></i> Ajustes</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="container mt-4">
+        <!-- Sección de Agenda -->
+        <section id="agenda" class="content-section">
+            <div class="section-header">
+                <button class="btn btn-back btn-outline-primary" onclick="window.location.href='index.html'">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </button>
+                <h2><i class="bi bi-calendar-check"></i> Agenda</h2>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Calendario</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary" id="prevMonth">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" id="nextMonth">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="calendarContainer">
+                                <!-- El calendario se generará aquí dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Próximos eventos</h5>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="upcomingEvents">
+                                <!-- Los eventos próximos se cargarán aquí dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Eventos programados</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="eventsList">
+                                <!-- La lista de eventos se cargará aquí dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal para agregar evento -->
+    <div class="modal fade" id="addEventModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar nuevo evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="eventForm">
+                        <div class="mb-3">
+                            <label for="eventTitle" class="form-label">Título del evento</label>
+                            <input type="text" class="form-control" id="eventTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDate" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="eventDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventTime" class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="eventTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventVehicle" class="form-label">Vehículo</label>
+                            <select class="form-select" id="eventVehicle" required>
+                                <option value="" selected disabled>Seleccionar vehículo...</option>
+                                <!-- Las opciones de vehículos se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventType" class="form-label">Tipo de evento</label>
+                            <select class="form-select" id="eventType" required>
+                                <option value="" selected disabled>Seleccionar tipo...</option>
+                                <option value="mantenimiento">Mantenimiento</option>
+                                <option value="reparacion">Reparación</option>
+                                <option value="inspeccion">Inspección</option>
+                                <option value="lavado">Lavado</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEvent()">Guardar evento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-car-front-fill"></i> Kiroo</h5>
+                    <p>La mejor aplicación para la gestión y mantenimiento de tu vehículo.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="agenda.html" class="text-white">Agenda</a></li>
+                        <li><a href="vehiculos.html" class="text-white">Mis Vehículos</a></li>
+                        <li><a href="emergencias.html" class="text-white">Emergencias</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contacto</h5>
+                    <p><i class="bi bi-envelope"></i> contacto@Kiroo.com</p>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <p>&copy; 2025 Kiroo. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables globales
+            let events = [];
+            let currentDate = new Date();
+            let editingEventId = null;
+            
+            // Cargar eventos y vehículos
+            loadEvents();
+            loadVehiclesForEvents();
+            
+            // Inicializar calendario
+            renderCalendar(currentDate);
+            
+            // Botones de navegación del calendario
+            document.getElementById('prevMonth').addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar(currentDate);
+            });
+            
+            document.getElementById('nextMonth').addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar(currentDate);
+            });
+            
+            // Funciones para manejar eventos
+            function loadEvents() {
+                const savedEvents = localStorage.getItem('events');
+                if (savedEvents) {
+                    events = JSON.parse(savedEvents);
+                }
+                renderEventsList();
+                renderUpcomingEvents();
+            }
+            
+            function loadVehiclesForEvents() {
+                const savedVehicles = localStorage.getItem('vehicles');
+                const vehicleSelect = document.getElementById('eventVehicle');
+                
+                // Limpiar opciones existentes excepto la primera
+                while (vehicleSelect.options.length > 1) {
+                    vehicleSelect.remove(1);
+                }
+                
+                if (savedVehicles) {
+                    const vehicles = JSON.parse(savedVehicles);
+                    vehicles.forEach(vehicle => {
+                        const option = document.createElement('option');
+                        option.value = vehicle.id;
+                        option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.plateNumber})`;
+                        vehicleSelect.appendChild(option);
+                    });
+                }
+            }
+            
+            function renderCalendar(date) {
+                const calendarContainer = document.getElementById('calendarContainer');
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                
+                // Obtener el primer día del mes y el último día
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                
+                // Obtener el día de la semana del primer día (0 = Domingo, 1 = Lunes, etc.)
+                const firstDayOfWeek = firstDay.getDay();
+                
+                // Nombres de los días de la semana
+                const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                
+                // Crear encabezado del calendario
+                let calendarHTML = `
+                    <div class="calendar-header mb-2">
+                        ${dayNames.map(day => `<div>${day}</div>`).join('')}
+                    </div>
+                    <div class="calendar">
+                `;
+                
+                // Añadir días vacíos al principio si el mes no comienza en domingo
+                for (let i = 0; i < firstDayOfWeek; i++) {
+                    calendarHTML += `<div class="calendar-day text-muted"></div>`;
+                }
+                
+                // Añadir los días del mes
+                const today = new Date();
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayDate = new Date(year, month, day);
+                    const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                    const hasEvents = events.some(event => {
+                        const eventDate = new Date(event.date);
+                        return eventDate.getDate() === day && 
+                               eventDate.getMonth() === month && 
+                               eventDate.getFullYear() === year;
+                    });
+                    
+                    calendarHTML += `
+                        <div class="calendar-day ${isToday ? 'current' : ''} ${hasEvents ? 'has-events' : ''}" 
+                             data-date="${year}-${month + 1}-${day}">
+                            ${day}
+                        </div>
+                    `;
+                }
+                
+                calendarHTML += '</div>';
+                
+                // Añadir título del mes y año
+                const titleHTML = `
+                    <h4 class="text-center mb-3">${monthNames[month]} ${year}</h4>
+                    ${calendarHTML}
+                `;
+                
+                calendarContainer.innerHTML = titleHTML;
+                
+                // Añadir event listeners a los días
+                document.querySelectorAll('.calendar-day[data-date]').forEach(day => {
+                    day.addEventListener('click', function() {
+                        const date = this.getAttribute('data-date');
+                        document.getElementById('eventDate').value = date;
+                        const modal = new bootstrap.Modal(document.getElementById('addEventModal'));
+                        modal.show();
+                    });
+                });
+            }
+            
+            function renderEventsList() {
+                const eventsContainer = document.getElementById('eventsList');
+                eventsContainer.innerHTML = '';
+                
+                if (events.length === 0) {
+                    eventsContainer.innerHTML = '<div class="text-center text-muted p-3">No tienes eventos programados</div>';
+                    return;
+                }
+                
+                // Ordenar eventos por fecha
+                const sortedEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                sortedEvents.forEach(event => {
+                    const eventDate = new Date(event.date);
+                    const formattedDate = eventDate.toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    const eventItem = document.createElement('div');
+                    eventItem.className = 'event-item';
+                    eventItem.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="event-date">${formattedDate} a las ${event.time}</div>
+                                <h6 class="event-title">${event.title}</h6>
+                                <div class="event-details">
+                                    <div>Vehículo: ${getVehicleName(event.vehicleId)}</div>
+                                    <div>Tipo: ${getEventTypeName(event.type)}</div>
+                                    ${event.description ? `<div>Descripción: ${event.description}</div>` : ''}
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editEvent('${event.id}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteEvent('${event.id}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    eventsContainer.appendChild(eventItem);
+                });
+            }
+            
+            function renderUpcomingEvents() {
+                const upcomingContainer = document.getElementById('upcomingEvents');
+                upcomingContainer.innerHTML = '';
+                
+                const today = new Date();
+                const nextWeek = new Date(today);
+                nextWeek.setDate(today.getDate() + 7);
+                
+                const upcomingEvents = events.filter(event => {
+                    const eventDate = new Date(event.date);
+                    return eventDate >= today && eventDate <= nextWeek;
+                }).sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                if (upcomingEvents.length === 0) {
+                    upcomingContainer.innerHTML = '<div class="text-center text-muted p-3">No hay eventos próximos</div>';
+                    return;
+                }
+                
+                upcomingEvents.slice(0, 5).forEach(event => {
+                    const eventDate = new Date(event.date);
+                    const formattedDate = eventDate.toLocaleDateString('es-ES', {
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    const eventItem = document.createElement('div');
+                    eventItem.className = 'mb-3 p-2 border rounded';
+                    eventItem.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary text-white rounded p-2 me-2">
+                                <i class="bi bi-calendar-event"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong>${event.title}</strong>
+                                <div class="small">${formattedDate} a las ${event.time}</div>
+                            </div>
+                        </div>
+                    `;
+                    upcomingContainer.appendChild(eventItem);
+                });
+            }
+            
+            function getVehicleName(vehicleId) {
+                const savedVehicles = localStorage.getItem('vehicles');
+                if (savedVehicles) {
+                    const vehicles = JSON.parse(savedVehicles);
+                    const vehicle = vehicles.find(v => v.id === vehicleId);
+                    if (vehicle) {
+                        return `${vehicle.brand} ${vehicle.model} (${vehicle.plateNumber})`;
+                    }
+                }
+                return 'Vehículo no encontrado';
+            }
+            
+            function getEventTypeName(type) {
+                const types = {
+                    'mantenimiento': 'Mantenimiento',
+                    'reparacion': 'Reparación',
+                    'inspeccion': 'Inspección',
+                    'lavado': 'Lavado',
+                    'otro': 'Otro'
+                };
+                return types[type] || type;
+            }
+            
+            window.saveEvent = function() {
+                const title = document.getElementById('eventTitle').value;
+                const date = document.getElementById('eventDate').value;
+                const time = document.getElementById('eventTime').value;
+                const vehicleId = document.getElementById('eventVehicle').value;
+                const type = document.getElementById('eventType').value;
+                const description = document.getElementById('eventDescription').value;
+                
+                if (!title || !date || !time || !vehicleId || !type) {
+                    alert('Por favor completa todos los campos obligatorios');
+                    return;
+                }
+                
+                const event = {
+                    id: editingEventId || Date.now().toString(),
+                    title,
+                    date,
+                    time,
+                    vehicleId,
+                    type,
+                    description,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                if (editingEventId) {
+                    // Actualizar evento existente
+                    const index = events.findIndex(e => e.id === editingEventId);
+                    if (index !== -1) {
+                        events[index] = event;
+                    }
+                } else {
+                    // Agregar nuevo evento
+                    event.createdAt = new Date().toISOString();
+                    events.push(event);
+                }
+                
+                localStorage.setItem('events', JSON.stringify(events));
+                
+                // Cerrar modal y actualizar listas
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addEventModal'));
+                modal.hide();
+                loadEvents();
+                renderCalendar(currentDate);
+                
+                // Limpiar formulario
+                document.getElementById('eventForm').reset();
+                editingEventId = null;
+                
+                alert(editingEventId ? 'Evento actualizado correctamente' : 'Evento guardado correctamente');
+            };
+            
+            window.editEvent = function(eventId) {
+                const event = events.find(e => e.id === eventId);
+                if (!event) return;
+                
+                document.getElementById('eventTitle').value = event.title;
+                document.getElementById('eventDate').value = event.date;
+                document.getElementById('eventTime').value = event.time;
+                document.getElementById('eventVehicle').value = event.vehicleId;
+                document.getElementById('eventType').value = event.type;
+                document.getElementById('eventDescription').value = event.description || '';
+                
+                editingEventId = eventId;
+                
+                const modal = new bootstrap.Modal(document.getElementById('addEventModal'));
+                modal.show();
+            };
+            
+            window.deleteEvent = function(eventId) {
+                if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
+                    events = events.filter(e => e.id !== eventId);
+                    localStorage.setItem('events', JSON.stringify(events));
+                    loadEvents();
+                    renderCalendar(currentDate);
+                    
+                    // Si estábamos editando este evento, limpiar el formulario
+                    if (editingEventId === eventId) {
+                        document.getElementById('eventForm').reset();
+                        editingEventId = null;
+                    }
+                }
+            };
+        });
+    </script>
+</body>
+</html>
