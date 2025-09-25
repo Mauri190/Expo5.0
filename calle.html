@@ -273,6 +273,27 @@
             opacity: 0.9;
         }
 
+        /* Botón de pantalla completa */
+        .fullscreen-btn {
+            display: none; /* Ocultar por defecto */
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #cc0000, #800000);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        .fullscreen-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.4);
+        }
+
         @media (max-width: 1024px) {
             .simulator-container {
                 flex-direction: column;
@@ -304,6 +325,10 @@
             
             .instructions {
                 display: none;
+            }
+
+            .fullscreen-btn {
+                display: block; /* Mostrar en móvil */
             }
         }
 
@@ -364,7 +389,7 @@
         </div>
 
         <div class="simulator-container">
-            <div class="canvas-wrapper">
+            <div class="canvas-wrapper" id="canvasWrapper">
                 <canvas id="renderCanvas"></canvas>
                 <div class="instructions">
                     <h4>Controles:</h4>
@@ -379,6 +404,7 @@
                         <li>Ratón: Arrastra para rotar vista</li>
                     </ul>
                 </div>
+                <button class="fullscreen-btn" id="fullscreenBtn">Pantalla Completa</button>
             </div>
 
             <div class="controls-panel">
@@ -511,6 +537,10 @@
                 this.cameraAngle = { horizontal: 0, vertical: Math.PI / 4 };
                 this.cameraDistance = 15;
                 this.cameraTarget = new THREE.Vector3(0, 0.5, 0);
+
+                // Para controles táctiles de cámara
+                this.touch = { x: 0, y: 0, prevX: 0, prevY: 0, distance: 0, prevDistance: 0 };
+                this.isPinching = false;
                 
                 this.init();
             }
@@ -582,7 +612,7 @@
                 // Create sky
                 const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
                 const skyMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x444444, // Cielo gris oscuro
+                    color: 0x666666, // Cielo gris oscuro
                     side: THREE.BackSide
                 });
                 const sky = new THREE.Mesh(skyGeometry, skyMaterial);
@@ -602,7 +632,7 @@
                 // Carretera principal
                 const roadGeometry = new THREE.PlaneGeometry(30, 1000);
                 const roadMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x222222, // Carretera gris oscuro
+                    color: 0x333333, // Carretera gris muy oscuro
                     roughness: 0.8,
                     metalness: 0.2
                 });
@@ -618,8 +648,8 @@
 
             createLaneMarkers() {
                 const markerMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0xff0000, // Marcas de carril rojas
-                    emissive: 0xff0000,
+                    color: 0x007bff, // Marcas de carril azules
+                    emissive: 0x007bff,
                     emissiveIntensity: 0.3
                 });
                 
@@ -656,8 +686,8 @@
                 // Crear elementos del entorno (árboles, edificios, etc.)
                 const treeGeometry = new THREE.ConeGeometry(3, 8, 8);
                 const treeTrunkGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3, 8);
-                const treeMaterial = new THREE.MeshStandardMaterial({ color: 0x800000 }); // Copas de árboles rojo oscuro
-                const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x442222 }); // Troncos más oscuros
+                const treeMaterial = new THREE.MeshStandardMaterial({ color: 0x0f3460 }); // Copas de árboles azul oscuro
+                const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50 }); // Troncos azul grisáceo
                 
                 // Añadir árboles a los lados de la carretera
                 for (let z = -400; z < 400; z += 50) {
@@ -763,7 +793,7 @@
 
             spawnTraffic() {
                 // Crear vehículos de tráfico en diferentes carriles
-                const carColors = [0xff0000, 0x800000, 0x666666, 0x444444]; // Colores de tráfico: rojo, rojo oscuro, gris
+                const carColors = [0x007bff, 0x4361ee, 0x666666, 0x444444]; // Colores de tráfico: azul, azul medio, gris, gris oscuro
                 
                 // Vehículos en carril izquierdo
                 for (let z = -300; z < 300; z += 70) {
@@ -868,7 +898,7 @@
                 });
 
                 // Mouse controls for camera
-                const canvasWrapper = document.getElementById('renderCanvas').parentElement;
+                const canvasWrapper = document.getElementById('canvasWrapper');
                 canvasWrapper.addEventListener('mousedown', (e) => {
                     if (e.button === 0) {
                         this.isMouseDown = true;
@@ -906,6 +936,51 @@
                     this.updateCameraPosition();
                 });
 
+                // Touch controls for camera (rotation and pinch-zoom)
+                canvasWrapper.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 1) {
+                        this.touch.prevX = e.touches[0].clientX;
+                        this.touch.prevY = e.touches[0].clientY;
+                        this.isMouseDown = true; // Usar isMouseDown para la rotación con un dedo
+                    } else if (e.touches.length === 2) {
+                        this.touch.prevDistance = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        this.isPinching = true;
+                        this.isMouseDown = false; // Desactivar rotación si hay pinch
+                    }
+                });
+
+                canvasWrapper.addEventListener('touchmove', (e) => {
+                    if (this.isMouseDown && e.touches.length === 1) { // Rotación con un dedo
+                        const deltaX = e.touches[0].clientX - this.touch.prevX;
+                        const deltaY = e.touches[0].clientY - this.touch.prevY;
+
+                        this.cameraAngle.horizontal -= deltaX * 0.005;
+                        this.cameraAngle.vertical -= deltaY * 0.005;
+
+                        this.touch.prevX = e.touches[0].clientX;
+                        this.touch.prevY = e.touches[0].clientY;
+                        this.updateCameraPosition();
+                    } else if (this.isPinching && e.touches.length === 2) { // Zoom con dos dedos
+                        this.touch.distance = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        const deltaDistance = this.touch.distance - this.touch.prevDistance;
+                        this.cameraDistance -= deltaDistance * 0.1; // Ajustar sensibilidad del zoom
+                        this.cameraDistance = Math.max(5, Math.min(50, this.cameraDistance));
+                        this.touch.prevDistance = this.touch.distance;
+                        this.updateCameraPosition();
+                    }
+                });
+
+                canvasWrapper.addEventListener('touchend', (e) => {
+                    this.isMouseDown = false;
+                    this.isPinching = false;
+                });
+
                 // Gear buttons
                 document.querySelectorAll('.gear-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -920,6 +995,20 @@
 
                 document.getElementById('rightLaneBtn').addEventListener('click', () => {
                     this.changeLaneRight();
+                });
+
+                // Fullscreen button
+                document.getElementById('fullscreenBtn').addEventListener('click', () => {
+                    const elem = document.getElementById('canvasWrapper');
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen();
+                    } else if (elem.mozRequestFullScreen) { /* Firefox */
+                        elem.mozRequestFullScreen();
+                    } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                        elem.webkitRequestFullscreen();
+                    } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                        elem.msRequestFullscreen();
+                    }
                 });
 
                 // Window resize
