@@ -302,6 +302,22 @@
             }
         }
 
+        /* Nuevas reglas para mostrar controles móviles en pantalla completa */
+        .canvas-wrapper:-webkit-full-screen .mobile-controls,
+        .canvas-wrapper:-moz-full-screen .mobile-controls,
+        .canvas-wrapper:-ms-fullscreen .mobile-controls,
+        .canvas-wrapper:fullscreen .mobile-controls {
+            display: block;
+        }
+
+        .canvas-wrapper:-webkit-full-screen .controls-panel,
+        .canvas-wrapper:-moz-full-screen .controls-panel,
+        .canvas-wrapper:-ms-fullscreen .controls-panel,
+        .canvas-wrapper:fullscreen .controls-panel {
+            display: none; /* Asegurarse de que el panel de control de escritorio esté oculto */
+        }
+
+
         .loading-screen {
             position: fixed;
             top: 0;
